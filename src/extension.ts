@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import selectProject from './commands/selectProject';
+import selectProject from './Commands/selectProject';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Startup');

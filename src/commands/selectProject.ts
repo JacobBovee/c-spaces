@@ -1,15 +1,18 @@
 import * as vscode from 'vscode';
-import { FoundFile, getHashMapOfFilesInExplorerOfTypes } from "../utils";
-import { VirtualWorkspace } from '../Services/Workspaces';
+import { dotnetListPackageReferences } from '../Services/DotnetTasks';
+import { getFilesInExplorerOfTypes, getPathsFromUri } from '../utils';
+import { ParsedPath } from 'path';
+import { VsProject } from '../Services/VsProject';
+import { CodeWorkspace } from '../Services/CodeWorkspace';
+// import { VirtualWorkspace } from '../Services/Workspaces';
 
-async function getSelectedProject(files: Map<string, FoundFile>): Promise<FoundFile | undefined> {    
+async function promptForProjectSelect(files: ParsedPath[]): Promise<ParsedPath | undefined> {    
     // Show options for projects
-    const fileLabels = Array.from(files.keys());
-    const selectedProjectedLabel = await vscode.window.showQuickPick(fileLabels);
+    const selectedProjectedLabel = await vscode.window.showQuickPick(files.map(file => file.base));
     
     // Get and return user selected project
     if (selectedProjectedLabel) {
-        const selectedProject = files.get(selectedProjectedLabel);
+        const selectedProject = files.find(file => file.base === selectedProjectedLabel);
         if (selectedProject) {
             return selectedProject;
         } 
@@ -21,11 +24,15 @@ async function getSelectedProject(files: Map<string, FoundFile>): Promise<FoundF
 
 export default async function selectProject(context: vscode.ExtensionContext) {
     // TODO: This should search the root of the project regardless of which workspace is open. 
-    const files = await getHashMapOfFilesInExplorerOfTypes(['csproj', 'sln']);
-    const selectedProject = await getSelectedProject(files);
+    const files: ParsedPath[] = await getFilesInExplorerOfTypes(['csproj', 'sln'])
+        .then(getPathsFromUri);
+    
+    const selectedProject = await promptForProjectSelect(files);
 
     if (selectedProject) {
-        const virtualWorkspace = VirtualWorkspace.initialize(selectedProject, files, context);
-        virtualWorkspace.createWorkspaceFromVirtualWorkspace();
+        // const virtualWorkspace = VirtualWorkspace.CreateWorkspace(selectedProject, files, context);
+        // virtualWorkspace.createWorkspaceFromVirtualWorkspace();
+        const project = new VsProject(selectedProject);
+        const codeWorkspace = new CodeWorkspace(project, context).save().open();
     }
 }
