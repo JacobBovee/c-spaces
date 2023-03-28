@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { VsProject } from "./VsProject";
-import * as path from 'path';
+import * as pathlib from 'path';
 import * as fs from 'fs';
 
 interface CodeWorkspaceFolder {
@@ -28,6 +28,12 @@ export class CodeWorkspace {
         this._context = context;
     }
 
+    public static fromParsedPath(path: pathlib.ParsedPath, context: vscode.ExtensionContext): CodeWorkspace {
+        const workspace = new CodeWorkspace(new VsProject(path), context);
+
+        return workspace;
+    }
+
     /**
      * Saves a code workspace to disk
      * @returns The CodeWorkspace
@@ -46,8 +52,13 @@ export class CodeWorkspace {
      * Opens a code workspace
      * @returns A CodeWorkspace
      */
-    public open(): CodeWorkspace {
-        vscode.commands.executeCommand('vscode.openFolder', this._workspaceUri);
+    public open(newWindow: boolean = false): CodeWorkspace {
+        if (newWindow) {
+            vscode.commands.executeCommand('vscode.openFolder', this._workspaceUri, true);
+        } else {
+            vscode.commands.executeCommand('vscode.openFolder', this._workspaceUri);
+        }
+
         return this;
     }
 
@@ -72,7 +83,7 @@ export class CodeWorkspace {
     private _vsProjectToFolder(vsProject: VsProject, prefix?: string): CodeWorkspaceFolder {
         return {
             name: (prefix ? `${prefix}: ` : '') + vsProject.name,
-            path: path.resolve(vsProject.projectPath.dir)
+            path: pathlib.resolve(vsProject.path.dir)
         };
     }
 

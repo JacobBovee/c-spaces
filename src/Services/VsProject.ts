@@ -1,9 +1,11 @@
 import { dotnetListPackageReferences, dotnetListSlnProjects } from "./DotnetTasks";
-import * as path from 'path';
+import * as pathlib from 'path';
+
+export const projectTypes = ['csproj', 'vbproj', 'dbproj'];
 
 enum VsType {
     sln = "sln",
-    project = "csproj",
+    project = "project",
     unknown = "unknown"
 }
 
@@ -13,16 +15,16 @@ enum VsType {
  */
 export class VsProject {
     public name: string;
-    public projectPath: path.ParsedPath;
+    public path: pathlib.ParsedPath;
     public type: VsType;
     public dependencies: VsProject[];
     public packages: string[];
 
     // TODO: Add a recursive flag to get all dependencies of dependencies
-    constructor(projectPath: path.ParsedPath, getDependencies: boolean = true) {
-        this.projectPath = projectPath;
-        this.name = this.projectPath.name;
-        this.type = this._getProjectType(this.projectPath.ext);
+    constructor(path: pathlib.ParsedPath, getDependencies: boolean = true) {
+        this.path = path;
+        this.name = this.path.name;
+        this.type = this._getProjectType(this.path.ext);
         this.dependencies = getDependencies ? this._getDependencies(this.type) : [];
         // TODO: Might be worth it to get the packages from the dependencies if requested. Mount a virtual directory?
         this.packages = [];
@@ -34,9 +36,9 @@ export class VsProject {
      * @returns The list of dependencies as VsProjects
      */
     private _getDependencies(type: VsType): VsProject[] {
-        const stringPath = path.format(this.projectPath);
+        const stringPath = pathlib.format(this.path);
         const dependencies = type === VsType.sln ? dotnetListSlnProjects(stringPath) : dotnetListPackageReferences(stringPath);
-        return dependencies.map((dependency) => new VsProject(path.parse(path.join(this.projectPath.dir, dependency)), false));
+        return dependencies.map((dependency) => new VsProject(pathlib.parse(pathlib.join(this.path.dir, dependency)), false));
     }
 
     /**
@@ -50,7 +52,7 @@ export class VsProject {
 
         if (ext === VsType.sln) {
             return VsType.sln;
-        } else if (ext === VsType.project) {
+        } else if (projectTypes.includes(ext)) {
             return VsType.project;
         }
         return VsType.unknown;

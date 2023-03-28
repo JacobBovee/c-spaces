@@ -16,7 +16,7 @@ function dotnetTaskRunner(command: string) {
  * @returns List of projects
  */
 const parseProjectsFromListOutput = (output: string): string[] => output
-    .match(/.*\.(csproj|sln)/g)?.map((project) => project.trim()) || [];
+    .match(/.*\.(csproj|vbproj|dbproj|sln)/g)?.map((project) => project.trim()) || [];
 
 /**
  * List all projects used in the project

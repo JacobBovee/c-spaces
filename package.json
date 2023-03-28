@@ -15,9 +15,18 @@
 			{
 				"command": "c-spaces.selectProject",
 				"title": "C# Spaces: Select a project"
+			},
+			{
+				"command": "c-spaces.selectProjectNewWindow",
+				"title": "C# Spaces: Select a project (New Window)"
 			}
 		]
 	},
+	"activationEvents": [
+		"workspaceContains:filePattern:**/*.csproj",
+		"workspaceContains:filePattern:**/*.sln",
+		"onLanguage:languageId:csharp"
+	],
 	"scripts": {
 		"vscode:prepublish": "yarn run compile",
 		"compile": "tsc -p ./",
