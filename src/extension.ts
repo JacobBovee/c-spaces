@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import selectProject from './Actions/selectProject';
+import selectProject from './Actions/SelectProject';
 import { onCsProjectPromptTask as registerCSharpProjectPrompt } from './Actions/ActivationPrompts';
 
 export function activate(context: vscode.ExtensionContext) {

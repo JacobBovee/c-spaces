@@ -3,7 +3,7 @@ import * as pathlib from 'path';
 
 export const projectTypes = ['csproj', 'vbproj', 'dbproj'];
 
-enum VsType {
+export enum VsType {
     sln = "sln",
     project = "project",
     unknown = "unknown"

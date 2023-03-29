@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { VsProject } from "./VsProject";
+import { VsProject, VsType } from "./VsProject";
 import * as pathlib from 'path';
 import * as fs from 'fs';
 
@@ -93,10 +93,14 @@ export class CodeWorkspace {
      * @returns A list of CodeWorkspaceFolders
      */
     private _getFolders(vsProject: VsProject): CodeWorkspaceFolder[] {
-        return [
-            this._vsProjectToFolder(vsProject, 'Project'),
-            ...vsProject.dependencies.map((dependency) => this._vsProjectToFolder(dependency, 'Dependency'))
-        ];
+        if (vsProject.type === VsType.sln) {
+            return vsProject.dependencies.map((dependency) => this._vsProjectToFolder(dependency, 'Project'));
+        } else {
+            return [
+                this._vsProjectToFolder(vsProject, 'Project'),
+                ...vsProject.dependencies.map((dependency) => this._vsProjectToFolder(dependency, 'Reference'))
+            ];
+        }
     }
 
     /**
