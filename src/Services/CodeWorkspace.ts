@@ -16,16 +16,17 @@ interface Settings {
  */
 export class CodeWorkspace {
     public readonly name: string;
-    public folders: CodeWorkspaceFolder[];
     public settings: Settings;
     private _workspaceUri?: vscode.Uri;
     private _context: vscode.ExtensionContext;
+    private _project: VsProject;
 
     constructor(vsProject: VsProject, context: vscode.ExtensionContext) {
         this.name = vsProject.name;
-        this.folders = this._getFolders(vsProject);
+        this._project = vsProject;
         this.settings = this._getSettings();
         this._context = context;
+        this._registerVsProjectWatchers();
     }
 
     public static fromParsedPath(path: pathlib.ParsedPath, context: vscode.ExtensionContext): CodeWorkspace {
@@ -63,12 +64,21 @@ export class CodeWorkspace {
     }
 
     /**
+     * Registers a VsProject with the workspace
+     * @param vsProject A VsProject
+     * @returns 
+     */
+    private _registerVsProjectWatchers = (): void => [this._project, ...this._project.dependencies]
+        .forEach((project) => project.initializeFileWatcher(() => this.save()));
+
+
+    /**
      * Serializes the workspace to JSON
      * @returns A serialized workspace for saving to disk
      */
     private _getSerializedWorkspace(): string {
         return JSON.stringify({
-            folders: this.folders,
+            folders: this._getFolders(),
             settings: this.settings
         }, null, 2);
     }
@@ -92,13 +102,13 @@ export class CodeWorkspace {
      * @param vsProject A VsProject
      * @returns A list of CodeWorkspaceFolders
      */
-    private _getFolders(vsProject: VsProject): CodeWorkspaceFolder[] {
-        if (vsProject.type === VsType.sln) {
-            return vsProject.dependencies.map((dependency) => this._vsProjectToFolder(dependency, 'Project'));
+    private _getFolders(): CodeWorkspaceFolder[] {
+        if (this._project.type === VsType.sln) {
+            return this._project.dependencies.map((dependency) => this._vsProjectToFolder(dependency, 'Project'));
         } else {
             return [
-                this._vsProjectToFolder(vsProject, 'Project'),
-                ...vsProject.dependencies.map((dependency) => this._vsProjectToFolder(dependency, 'Reference'))
+                this._vsProjectToFolder(this._project, 'Project'),
+                ...this._project.dependencies.map((dependency) => this._vsProjectToFolder(dependency, 'Reference'))
             ];
         }
     }

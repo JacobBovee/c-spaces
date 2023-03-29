@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { dotnetListPackageReferences, dotnetListSlnProjects } from "./DotnetTasks";
 import * as pathlib from 'path';
 
@@ -28,6 +29,33 @@ export class VsProject {
         this.dependencies = getDependencies ? this._getDependencies(this.type) : [];
         // TODO: Might be worth it to get the packages from the dependencies if requested. Mount a virtual directory?
         this.packages = [];
+    }
+
+    /**
+     * Update the project based on a file path. This is useful for when the project is renamed, moved or changed.
+     * @param path The path to update the project with
+     */
+    public update(path: pathlib.ParsedPath) {
+        this.path = path;
+        this.name = this.path.name;
+        this.type = this._getProjectType(this.path.ext);
+        this.dependencies = this._getDependencies(this.type);
+    }
+
+    /**
+     * Initializes the file watcher for the project and its dependencies
+     * @param onChangeCb Callback to run when a file changes
+     */
+    public initializeFileWatcher(onChangeCb: () => void) {
+        const watcher = vscode.workspace.createFileSystemWatcher(pathlib.format(this.path));
+        watcher.onDidChange((e) => {
+            try {
+                this.update(this.path);
+                onChangeCb();
+            } catch (e) {
+                console.error("Failed update, may be a parsing error if file format is innacurate.", e);
+            }
+        });
     }
 
     /**
